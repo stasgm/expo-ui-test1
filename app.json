@@ -2,6 +2,7 @@
   "name": "test1",
   "displayName": "test1",
   "expo": {
+    "scheme": "test1",    
     "name": "test1",
     "slug": "test1",
     "version": "1.0.0",
