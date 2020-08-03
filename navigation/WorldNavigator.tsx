@@ -1,13 +1,14 @@
-import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
+import { createStackNavigator, StackNavigationProp, StackScreenProps } from '@react-navigation/stack';
 import React from 'react';
 
 import WorldScreen from '../screens/World/List';
-import { WorldParamList } from '../types';
+import { WorldParamList, IDetailParams } from '../types';
 import { StyleSheet } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import Settings from '../screens/Settings';
 import { RouteProp } from '@react-navigation/native';
 import { DocumentDetail } from '../screens/World/DocumentDetail';
+import { Filter } from '../screens/World/Filter';
 
 export const WorldNavigator = ({ route, navigation }: Props) => {
   return (
@@ -18,29 +19,20 @@ export const WorldNavigator = ({ route, navigation }: Props) => {
         options={{
           headerTitle: 'World',
           headerTitleAlign: 'center',
-          headerRight: ({ tintColor }) => {
-            return (
-              <IconButton
-                icon="settings"
-                // color={ tintColor}
-                // background={ tintColor }
-                size={20}
-                onPress={() => navigation.navigate('Settings')}
-              />
-            )
-          },
           headerLeft: ({ tintColor }) => {
             return (
               <IconButton
-                icon="rocket"
+                icon="settings"
+                background={ tintColor }
                 size={20}
-                onPress={() => console.log('Pressed')}
+                onPress={() => navigation.navigate('Settings')}
               />
             )
           },
         }}
       />
       <WorldStack.Screen name="Settings" component={Settings} />
+      <WorldStack.Screen name="Filter" component={Filter} />      
       <WorldStack.Screen name="Document" component={DocumentDetail} />
     </WorldStack.Navigator>
   );
@@ -48,16 +40,8 @@ export const WorldNavigator = ({ route, navigation }: Props) => {
 
 const WorldStack = createStackNavigator<WorldParamList>();
 
-type ListScreenRouteProp = RouteProp<WorldParamList, 'List'>;
-
-type ListScreenNavigationProp = StackNavigationProp<
-  WorldParamList,
-  'List'
->;
-type Props = {
-  route: ListScreenRouteProp;
-  navigation: ListScreenNavigationProp;
-};
+export type Props = StackScreenProps<WorldParamList, 'List'>;
+export type DetailProps = StackScreenProps<WorldParamList, 'Document'>;
 
 const styles = StyleSheet.create({
   buttons: {

@@ -1,11 +1,13 @@
 import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 
-export default function Settings() {
+export const Filter = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
+      <Text style={styles.title}>Фильтрация</Text>
       <View style={styles.separator} />
+      <Text style={styles.title}>Сортировка</Text>
+      <View style={styles.separator} />      
     </View>
   );
 }

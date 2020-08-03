@@ -9,9 +9,10 @@ export type BottomTabParamList = {
 };
 
 export type WorldParamList = {
-  List: undefined;
+  List: { item: IData };
   Settings: undefined;
-  Document: { id: number };
+  Filter: undefined;
+  Document: { item: IData };
 };
 
 export type TabTwoParamList = {
@@ -23,6 +24,8 @@ export interface IData {
   region?: string;
   population?: number;
   capital?: string;
-  alpha3Code?: string;
+  alpha3Code: string;
+  alpha2Code: string;
   borders?: string[];
+  flag?: string;
 }

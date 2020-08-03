@@ -1,9 +1,11 @@
 import React, { useRef, useCallback } from 'react';
-import { FlatList, Text, View, StyleSheet, StatusBar, SafeAreaView, TouchableHighlight, Platform, RefreshControl, Modal, Animated, Dimensions, TouchableOpacity } from 'react-native';
+import { FlatList, Text, View, StyleSheet, StatusBar, SafeAreaView, TouchableHighlight, Platform, RefreshControl, Modal, Animated, Dimensions, TouchableOpacity, ImageEditor } from 'react-native';
 import { useState, useEffect } from 'react';
 import { FAB, Searchbar, Colors, Avatar, IconButton, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { IData } from '../../types';
+import { useActionSheet as useExpoActionSheet } from '@expo/react-native-action-sheet';
+import { DetailProps, Props } from '../../navigation/WorldNavigator';
 
 const ItemSeparator = ({ highlighted }: { highlighted: boolean }) => {
   return (
@@ -24,7 +26,7 @@ const Item = ({ item, onPress, style }: { item: IData, onPress: () => void, styl
   >
     <View style={styles.itemContainer}>
       <View style={{ width: 40, justifyContent: 'center' }}>
-        <Avatar.Icon size={32} icon="bookmark-outline" style={{ backgroundColor: Colors.blue600 }} />
+        <Avatar.Text size={32} label={item.alpha2Code || '?'} style={{ backgroundColor: Colors.blue600 }} />
       </View>
       <View>
         <View style={styles.titleContainer}>
@@ -44,10 +46,13 @@ interface IState {
   items: IData[],
   filteredList: IData[],
   filter: null | Object,
-  animation: any,
+  sort: {
+    field: keyof IData,
+    direction: 'ASC' | 'DESC'
+  },
 }
 
-export default function WorldScreen() {
+export default function WorldScreen({ route }: Props) {
   const navigation = useNavigation();
 
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -58,84 +63,128 @@ export default function WorldScreen() {
     items: [],
     filteredList: [],
     filter: null,
-    animation: new Animated.Value(0),
+    sort: {
+      field: 'name',
+      direction: 'ASC'
+    },
   })
 
-  const renderItem = ({ item }: { item: IData }) => <Item item={item} onPress={() => { navigation.navigate('Document', { item }) }} />;
+  const renderItem = ({ item }: { item: IData }) => (
+    <Item
+      item={item}
+      onPress={() => {
+        navigation.navigate('Document', { item })
+      }}
+    />
+  );
+
+  const clearList = useCallback(() => {
+    setState({ ...state, items: [], filteredList: [] });
+  }, []);
 
   useEffect(() => {
-    setState({ ...state, filteredList: state.items.filter(i => i.name.toUpperCase().includes(searchQuery.toUpperCase())) })
-  }, [searchQuery])
+    setState({
+      ...state,
+      filteredList: sortArr({
+        arr: state.items.filter(i => i.name.toUpperCase().includes(searchQuery.toUpperCase())),
+        dir: state.sort.direction,
+        field: state.sort.field
+      })
+    })
+  }, [searchQuery, state.sort, state.items])
+
+  React.useEffect(() => {
+    if (!route.params?.item) return;
+    const { item } = route.params;
+    setState({
+      ...state,
+      items: state.items.map(i => i.alpha3Code == item.alpha3Code ? item : i)
+    });
+  }, [route.params?.item]);
 
   const loadData = useCallback(async () => {
     const res = await fetch('https://restcountries.eu/rest/v2/all');
     const data: IData[] = await res.json();
-    setState({ ...state, error: null, isLoaded: true, items: data, filteredList: [], filter: null, });
+    setState({ ...state, error: null, isLoaded: true, items: data, filteredList: data, filter: null, });
     setSearchQuery('');
   }, []);
 
-  useEffect(() => { loadData() }, []);
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const onChangeSearch = (query: string) => setSearchQuery(query);
 
-  const screenHeight = Dimensions.get("window").height;
+  const sortArr = ({ arr, field, dir }: { arr: IData[], field: keyof IData, dir: 'ASC' | 'DESC' }) => {
+    return arr.sort(function (a, b) {
+      if (a[field]! > b[field]!) {
+        return (dir === 'ASC') ? 1 : -1;
+      }
+      if (b[field]! > a[field]!) {
+        return (dir === 'ASC') ? -1 : 1;
+      }
+      return 0;
+    })
+  }
 
-  const handleOpen = () => {
-    Animated.timing(state.animation, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
 
-  const handleClose = () => {
-    Animated.timing(state.animation, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
+  const showActionSheet = useActionSheet();
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerLeft: () => (
+      headerRight: () => (
         <IconButton
-          icon="rocket"
-          size={20}
-          onPress={() => handleOpen()}
+          icon="menu"
+          size={24}
+          onPress={() => {
+            showActionSheet(
+              [
+                {
+                  title: "Очистить",
+                  type: 'destructive',
+                  onPress: async () => {
+                    clearList();
+                  },
+                },
+                {
+                  title: "По континенту",
+                  onPress: async () => {
+                    setState({ ...state, sort: { direction: 'ASC', field: 'region' } });
+                  },
+                },
+                {
+                  title: "По наименованию",
+                  onPress: async () => {
+                    setState({ ...state, sort: { direction: 'ASC', field: 'name' } });
+                  },
+                },
+                {
+                  title: "По населению (по убыванию)",
+                  onPress: async () => {
+                    setState({ ...state, sort: { direction: 'DESC', field: 'population' } });
+                  },
+                },
+                {
+                  title: "По населению (по возрастанию)",
+                  onPress: async () => {
+                    setState({ ...state, sort: { direction: 'ASC', field: 'population' } });
+                  },
+                },
+                {
+                  title: "Cancel",
+                  type: 'cancel',
+                  onPress: async () => {
+
+                  },
+                },
+              ]
+            )
+          }
+          }
         />
       ),
     });
   }, [navigation]);
-
-  const slideUp = {
-    transform: [
-      {
-        translateY: state.animation.interpolate({
-          inputRange: [0.01, 1],
-          outputRange: [0, -1 * screenHeight],
-          extrapolate: "clamp",
-        }),
-      },
-    ],
-  };
-
-  const backdrop = {
-    transform: [
-      {
-        translateY: state.animation.interpolate({
-          inputRange: [0, 0.01],
-          outputRange: [screenHeight, 0],
-          extrapolate: "clamp",
-        }),
-      },
-    ],
-    opacity: state.animation.interpolate({
-      inputRange: [0.01, 0.5],
-      outputRange: [0, 1],
-      extrapolate: "clamp",
-    }),
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -151,19 +200,20 @@ export default function WorldScreen() {
           color={state.filter ? Colors.red500 : Colors.black}
           size={24}
           style={{ width: 36 }}
-          onPress={() => setState({ ...state, filter: { name: 'name' } })}
+          onPress={() =>
+            setState({ ...state, filter: { name: 'name' } })}
         />
       </View>
       <FlatList
         ListEmptyComponent={
-          !state.isLoaded ? <Text style={{ flex: 1, textAlign: 'center' }}>нет данных</Text> : <View></View>
+          <Text style={{ flex: 1, textAlign: 'center' }}>Нет данных</Text>
         }
         refreshControl={
           <RefreshControl
             refreshing={!state.isLoaded}
             onRefresh={() => loadData()}
           />}
-        data={searchQuery ? state.filteredList : state.items} renderItem={renderItem}
+        data={state.filteredList} renderItem={renderItem}
         keyExtractor={item => item.name}
         ItemSeparatorComponent={ItemSeparator}
         contentContainerStyle={styles.list}
@@ -175,18 +225,50 @@ export default function WorldScreen() {
         icon="plus"
         onPress={() => navigation.navigate('Document', {})}
       />
-      <Animated.View style={[StyleSheet.absoluteFill, styles.cover, backdrop]}>
-        <View style={[styles.sheet]}>
-          <Animated.View style={[styles.popup, slideUp]}>
-            <TouchableOpacity onPress={handleClose}>
-              <Text>Close</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </Animated.View>
     </SafeAreaView >
   );
 }
+
+
+export type ActionSheetItem = {
+  type?: "normal" | "destructive" | "cancel";
+  title: string;
+  onPress?: () => void;
+};
+
+export interface ActionSheetOptions {
+  title?: string;
+  message?: string;
+  tintColor?: string;
+  anchor?: number;
+  defaultCancel?: boolean;
+}
+
+const useActionSheet = () => {
+  const { showActionSheetWithOptions } = useExpoActionSheet();
+  return useCallback(
+    (items: ActionSheetItem[], options: Partial<ActionSheetOptions> = {}) => {
+      showActionSheetWithOptions(
+        {
+          ...options,
+          options: items
+            .map((i) => i.title)
+            .concat(options.defaultCancel ? ["Cancel"] : []),
+          cancelButtonIndex: options.defaultCancel
+            ? items.length
+            : items.findIndex((i) => i.type === "cancel"),
+          destructiveButtonIndex: items.findIndex(
+            (i) => i.type === "destructive"
+          ),
+        },
+        (i) => {
+          items[i]?.onPress?.();
+        }
+      );
+    },
+    [showActionSheetWithOptions]
+  );
+};
 
 const styles = StyleSheet.create({
   activityContainer: {
