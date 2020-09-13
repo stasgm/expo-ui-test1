@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import { useActionSheet as useExpoActionSheet } from '@expo/react-native-action-sheet';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useLayoutEffect, useState, useEffect } from 'react';
@@ -76,9 +77,6 @@ const Item = ({ item, onPress, style }: { item: IData; onPress: () => void; styl
 );
 
 interface IState {
-  error: null | string;
-  isLoaded: boolean;
-  items: IData[];
   filteredList: IData[];
   filter: null | object;
   sort: {
@@ -99,10 +97,19 @@ export default function WorldScreen({ route }: Props) {
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  const sortArr = useCallback(({ arr, field, dir }: { arr: IData[]; field: keyof IData; dir: 'ASC' | 'DESC' }) => {
+    return arr.sort((a, b) => {
+      if (a[field] > b[field]) {
+        return dir === 'ASC' ? 1 : -1;
+      }
+      if (b[field] > a[field]) {
+        return dir === 'ASC' ? -1 : 1;
+      }
+      return 0;
+    });
+  }, []);
+
   const [state, setState] = useState<IState>({
-    error: null,
-    isLoaded: false,
-    items: [],
     filteredList: [],
     filter: null,
     sort: {
@@ -120,68 +127,49 @@ export default function WorldScreen({ route }: Props) {
     />
   );
 
-  const clearList = useCallback(() => {
-    setState((prev) => ({ ...prev, items: [], filteredList: [] }));
-  }, []);
-
   useEffect(() => {
     setState((prev) => ({
       ...prev,
       filteredList: sortArr({
-        arr: prev.items.filter((i) => i.name.toUpperCase().includes(searchQuery.toUpperCase())),
+        arr: appState.data.filter((i) => i.name.toUpperCase().includes(searchQuery.toUpperCase())),
         dir: prev.sort.direction,
         field: prev.sort.field,
       }),
     }));
-  }, [searchQuery, state.sort, state.items]);
+  }, [searchQuery, state.sort, appState.data, sortArr]);
 
   useEffect(() => {
     if (!route.params?.item) {
       return;
     }
     const { item } = route.params;
-    console.log(item);
-    setState({
-      ...state,
-      items: state.items.map((i) => (i.alpha3Code == item.alpha3Code ? item : i)),
-    });
-  }, [route.params, route.params?.item, state]);
+    // console.log(item);
+    setState((prev) => ({
+      ...prev,
+      items: appState.data.map((i) => (i.alpha3Code === item.alpha3Code ? item : i)),
+    }));
+  }, [route.params, route.params?.item, appState.data]);
 
   const loadData = useCallback(async () => {
     setServerReq({ isError: false, isLoading: true, status: '' });
     try {
       const res = await fetch('https://restcountries.eu/rest/v2/all');
       const data: IData[] = await res.json();
-      // appActions. data
-      setServerReq({ isError: false, isLoading: false, status: '' });
       appActions.addItems(data);
-      setState({ ...state, error: null, isLoaded: true, items: data, filteredList: data, filter: null });
+      setState((prev) => ({ ...prev, filter: null }));
+      setServerReq({ isError: false, isLoading: false, status: '' });
       setSearchQuery('');
     } catch (err) {
       setServerReq({ isError: true, isLoading: false, status: err.message });
       console.log(err);
     }
-  }, []);
+  }, [appActions]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   const onChangeSearch = (query: string) => setSearchQuery(query);
-
-  const sortArr = ({ arr, field, dir }: { arr: IData[]; field: keyof IData; dir: 'ASC' | 'DESC' }) => {
-    return arr.sort((a, b) => {
-      (a[field] && b[field]) {
-        if (a[field] > b[field]) {
-          return dir === 'ASC' ? 1 : -1;
-        }
-        if (b[field]! > a[field]!) {
-          return dir === 'ASC' ? -1 : 1;
-        }
-      }
-      return 0;
-    });
-  };
 
   const showActionSheet = useActionSheet();
 
@@ -197,7 +185,7 @@ export default function WorldScreen({ route }: Props) {
                 title: 'Очистить',
                 type: 'destructive',
                 onPress: async () => {
-                  clearList();
+                  appActions.deleteAllItems();
                 },
               },
               {
@@ -234,7 +222,7 @@ export default function WorldScreen({ route }: Props) {
         />
       ),
     });
-  }, [clearList, navigation, showActionSheet, state]);
+  }, [appActions, navigation, showActionSheet, state]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -255,7 +243,7 @@ export default function WorldScreen({ route }: Props) {
       </View>
       <FlatList
         ListEmptyComponent={<Text style={{ flex: 1, textAlign: 'center' }}>Нет данных</Text>}
-        refreshControl={<RefreshControl refreshing={!state.isLoaded} onRefresh={() => loadData()} />}
+        refreshControl={<RefreshControl refreshing={serverReq.isLoading} onRefresh={() => loadData()} />}
         data={state.filteredList}
         renderItem={renderItem}
         keyExtractor={(item) => item.name}
@@ -311,7 +299,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.white,
     flex: 1,
-    marginTop: StatusBar.currentHeight || 0,
+    marginTop: StatusBar.currentHeight ?? 0,
   },
   cover: {
     backgroundColor: 'rgba(0,0,0,.5)',
