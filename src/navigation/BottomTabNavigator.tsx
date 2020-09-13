@@ -1,24 +1,22 @@
-import { Fontisto } from '@expo/vector-icons'; 
+import { Fontisto } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 
-import { BottomTabParamList } from '../types';
-
-import { WorldNavigator } from './WorldNavigator';
+import { BottomTabParamList } from '../model/types';
 import { TabTwoNavigator } from './TabTwoNavigator';
+import { WorldNavigator } from './WorldNavigator';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamList>();
 
 export default function BottomTabNavigator() {
   return (
-    <BottomTab.Navigator
-      initialRouteName="World"
-      tabBarOptions={{}}>
+    <BottomTab.Navigator initialRouteName="World" tabBarOptions={{}}>
       <BottomTab.Screen
-        name="World"        
+        name="World"
         component={WorldNavigator}
         options={{
           title: 'World',
+          tabBarLabel: 'Мир',
           tabBarIcon: ({ color }) => <TabBarIcon name="world" color={color} />,
         }}
       />
@@ -35,5 +33,5 @@ export default function BottomTabNavigator() {
 }
 
 function TabBarIcon(props: { name: string; color: string }) {
-  return <Fontisto size={30} style={{ marginBottom: -3 }} {...props} />;
+  return <Fontisto size={28} style={{ marginBottom: -3 }} {...props} />;
 }

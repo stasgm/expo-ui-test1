@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, ScrollView, Picker, Dimensions } from 'react-native';
-import { SvgUri } from 'react-native-svg';
-import { IData } from '../../types';
-import { IconButton, TextInput, Colors } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { IconButton, TextInput, Colors } from 'react-native-paper';
+
+import { IData } from '../../model/types';
 import { DetailProps } from '../../navigation/WorldNavigator';
 
 export const DocumentDetail = ({ route }: DetailProps) => {
@@ -12,33 +12,31 @@ export const DocumentDetail = ({ route }: DetailProps) => {
   const [state, setState] = useState<IData>({} as IData);
 
   useEffect(() => {
-    if (!route.params?.item) return;
+    if (!route.params?.item) {
+      return;
+    }
     const { item } = route.params;
     setState(item);
-  }, [route.params?.item]);
+  }, [route.params, route.params?.item]);
 
-  const saveEntity = () => {
-    if (!state) return;
+  const saveEntity = useCallback(() => {
+    if (!state) {
+      return;
+    }
     navigation.navigate('List', { item: state });
-  }
+  }, [navigation, state]);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <IconButton
-          icon="content-save-all"
-          size={24}
-          onPress={saveEntity}
-        />
-      ),
+      headerRight: () => <IconButton icon="content-save-all" size={24} onPress={saveEntity} />,
     });
   }, [navigation, saveEntity]);
 
-  const { height, width } = Dimensions.get("window")  
-  
+  // const { height, width } = Dimensions.get('window');
+
   return (
     <ScrollView>
-      <View style={styles.container} >
+      <View style={styles.container}>
         {/* {state.flag ? <SvgUri uri={state.flag} viewBox={`0 0 720 720`} width="100%" height="100%" opacity={0.5}/> : <></>} */}
         <TextInput
           mode={'outlined'}
@@ -47,7 +45,7 @@ export const DocumentDetail = ({ route }: DetailProps) => {
           value={state?.name}
           onChangeText={(e) => setState({ ...state, name: e })}
           style={styles.input}
-          theme={{ colors: { placeholder: Colors.blue600, primary: Colors.red600 }, }}
+          theme={{ colors: { placeholder: Colors.blue600, primary: Colors.red600 } }}
         />
         <View style={styles.separator} />
         <TextInput
@@ -57,7 +55,7 @@ export const DocumentDetail = ({ route }: DetailProps) => {
           onChangeText={(e) => setState({ ...state, capital: e })}
           value={state?.capital}
           style={styles.input}
-          theme={{ colors: { placeholder: Colors.blue600, primary: Colors.red600 }, }}
+          theme={{ colors: { placeholder: Colors.blue600, primary: Colors.red600 } }}
         />
         <View style={styles.separator} />
         <TextInput
@@ -67,33 +65,33 @@ export const DocumentDetail = ({ route }: DetailProps) => {
           onChangeText={(e) => setState({ ...state, region: e })}
           value={state?.region}
           style={styles.input}
-          theme={{ colors: { placeholder: Colors.blue600, primary: Colors.red600 }, }}
+          theme={{ colors: { placeholder: Colors.blue600, primary: Colors.red600 } }}
         />
       </View>
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'stretch',
-    justifyContent: 'flex-start',
-    flexDirection: 'column',
-    padding: 5,
     display: 'flex',
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    padding: 5,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+  },
+  separator: {
+    height: 1,
+    marginVertical: 1,
+    width: '80%',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 1,
-    height: 1,
-    width: '80%',
-  },
-  input: {
-    fontSize: 16,
-    flex: 1,
   },
 });
