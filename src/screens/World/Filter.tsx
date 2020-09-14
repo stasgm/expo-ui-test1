@@ -1,11 +1,23 @@
-import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
-import SubTitle from '../../components/SubTitle';
-import ItemSeparator from '../../components/ItemSeparator';
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { RadioButton } from 'react-native-paper';
+
+import ItemSeparator from '../../components/ItemSeparator';
+import SubTitle from '../../components/SubTitle';
+import { IField, ISortField } from '../../model/types';
+
+interface IState {
+  filter: IField[];
+  sort: ISortField[];
+}
 
 export const Filter = () => {
   const [checked, setChecked] = React.useState('first');
+
+  const [state, setState] = useState<IState>({
+    filter: [],
+    sort: [],
+  });
 
   return (
     <View style={styles.container}>
@@ -29,8 +41,8 @@ export const Filter = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
+    flex: 1,
     justifyContent: 'flex-start',
   },
 });

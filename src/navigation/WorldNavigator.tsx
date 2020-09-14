@@ -1,6 +1,5 @@
 import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
 import React from 'react';
-import { IconButton } from 'react-native-paper';
 
 import { WorldParamList } from '../model/types';
 import Settings from '../screens/Settings';
@@ -8,7 +7,7 @@ import { DocumentDetail } from '../screens/World/DocumentDetail';
 import { Filter } from '../screens/World/Filter';
 import WorldScreen from '../screens/World/List';
 
-export const WorldNavigator = ({ navigation }: Props) => {
+export const WorldNavigator = () => {
   return (
     <WorldStack.Navigator>
       <WorldStack.Screen
@@ -17,16 +16,6 @@ export const WorldNavigator = ({ navigation }: Props) => {
         options={{
           headerTitle: 'Мир',
           headerTitleAlign: 'center',
-          headerLeft: ({ tintColor }) => {
-            return (
-              <IconButton
-                icon="settings"
-                background={tintColor}
-                size={20}
-                onPress={() => navigation.navigate('Settings')}
-              />
-            );
-          },
         }}
       />
       <WorldStack.Screen

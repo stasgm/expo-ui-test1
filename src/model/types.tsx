@@ -54,6 +54,8 @@ export interface IAppSettings {
 
 export interface IAppState {
   data: IData[];
+  filter: IField[];
+  sort: ISortField[];
   settings?: IAppSettings;
   settingsSearch?: string[];
   // formParams?: IFormParams;
@@ -65,4 +67,15 @@ export interface IListItem {
   id?: number;
   value?: string;
   [key: string]: unknown;
+}
+
+export interface IField {
+  name: string;
+  value: string;
+}
+
+export interface ISortField {
+  number: number;
+  field: string;
+  direction: 'ASC' | 'DESC';
 }

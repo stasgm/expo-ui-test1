@@ -18,6 +18,7 @@ import { FAB, Searchbar, Colors, Avatar, IconButton } from 'react-native-paper';
 import ItemSeparator from '../../components/ItemSeparator';
 import { IData, IDataFetch } from '../../model/types';
 import { Props } from '../../navigation/WorldNavigator';
+import api from '../../services/api';
 import { useAppStore } from '../../store';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -95,7 +96,18 @@ export default function WorldScreen({ route }: Props) {
     status: undefined,
   });
 
+  const [controller, setController] = useState(new AbortController());
+
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [state, setState] = useState<IState>({
+    filteredList: [],
+    filter: null,
+    sort: {
+      field: 'name',
+      direction: 'ASC',
+    },
+  });
 
   const sortArr = useCallback(({ arr, field, dir }: { arr: IData[]; field: keyof IData; dir: 'ASC' | 'DESC' }) => {
     return arr.sort((a, b) => {
@@ -108,15 +120,6 @@ export default function WorldScreen({ route }: Props) {
       return 0;
     });
   }, []);
-
-  const [state, setState] = useState<IState>({
-    filteredList: [],
-    filter: null,
-    sort: {
-      field: 'name',
-      direction: 'ASC',
-    },
-  });
 
   const renderItem = ({ item }: { item: IData }) => (
     <Item
@@ -139,6 +142,15 @@ export default function WorldScreen({ route }: Props) {
   }, [searchQuery, state.sort, appState.data, sortArr]);
 
   useEffect(() => {
+    if (!serverReq.isError) {
+      return;
+    }
+    setTimeout(() => {
+      setServerReq({ isError: false, isLoading: false, status: '' });
+    }, 3000);
+  }, [serverReq.isError]);
+
+  useEffect(() => {
     if (!route.params?.item) {
       return;
     }
@@ -150,24 +162,31 @@ export default function WorldScreen({ route }: Props) {
     }));
   }, [route.params, route.params?.item, appState.data]);
 
+  const abortRequest = useCallback(async () => {
+    controller.abort();
+    setController(new AbortController());
+    // setServerReq({ isError: true, isLoading: false, status: err.message });
+  }, [controller]);
+
   const loadData = useCallback(async () => {
+    setTimeout(abortRequest, 2000);
     setServerReq({ isError: false, isLoading: true, status: '' });
     try {
-      const res = await fetch('https://restcountries.eu/rest/v2/all');
-      const data: IData[] = await res.json();
+      const data = await api.getAllData(controller.signal);
       appActions.addItems(data);
       setState((prev) => ({ ...prev, filter: null }));
       setServerReq({ isError: false, isLoading: false, status: '' });
       setSearchQuery('');
     } catch (err) {
-      setServerReq({ isError: true, isLoading: false, status: err.message });
-      console.log(err);
+      setServerReq({ isError: true, isLoading: false, status: err.message === 'Aborted' ? 'Отмена' : err.message });
+      // console.log(err);
     }
-  }, [appActions]);
+  }, [abortRequest, appActions, controller.signal]);
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onChangeSearch = (query: string) => setSearchQuery(query);
 
@@ -175,6 +194,13 @@ export default function WorldScreen({ route }: Props) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerLeft: () => (
+        <IconButton
+          icon={serverReq.isLoading ? 'cancel' : 'reload'}
+          size={20}
+          onPress={serverReq.isLoading ? abortRequest : loadData}
+        />
+      ),
       headerRight: () => (
         <IconButton
           icon="menu"
@@ -222,10 +248,15 @@ export default function WorldScreen({ route }: Props) {
         />
       ),
     });
-  }, [appActions, navigation, showActionSheet, state]);
+  }, [abortRequest, appActions, controller, loadData, navigation, serverReq.isLoading, showActionSheet, state]);
 
   return (
     <SafeAreaView style={styles.container}>
+      {serverReq.isError && (
+        <View>
+          <Text>{serverReq.status}</Text>
+        </View>
+      )}
       <View style={{ flexDirection: 'row', borderBottomWidth: styles.separator.height }}>
         <Searchbar
           placeholder="Поиск"

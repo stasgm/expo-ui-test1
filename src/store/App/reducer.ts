@@ -5,6 +5,8 @@ import { TAppActions, ActionAppTypes } from './actions';
 
 export const initialState: IAppState = {
   data: [],
+  filter: [],
+  sort: [{ number: 0, field: 'name', direction: 'ASC' }],
 };
 
 export const reducer: Reducer<IAppState, TAppActions> = (state = initialState, action): IAppState => {
@@ -25,6 +27,9 @@ export const reducer: Reducer<IAppState, TAppActions> = (state = initialState, a
         ...state,
         data: [],
       };
+    case ActionAppTypes.UPDATE_FILTER: {
+      return { ...state, filter: action.payload };
+    }
     default:
       return state;
   }
