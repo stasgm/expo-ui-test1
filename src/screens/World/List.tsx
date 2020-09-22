@@ -76,7 +76,7 @@ const Item = ({ item, onPress, style }: { item: IData; onPress: () => void; styl
     </View>
   </TouchableHighlight>
 );
-
+/*
 interface IState {
   filteredList: IData[];
   filter: null | object;
@@ -84,7 +84,7 @@ interface IState {
     field: keyof IData;
     direction: 'ASC' | 'DESC';
   };
-}
+} */
 
 export default function WorldScreen({ route }: Props) {
   const navigation = useNavigation();
@@ -100,7 +100,7 @@ export default function WorldScreen({ route }: Props) {
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [state, setState] = useState<IState>({
+ /*  const [state, setState] = useState<IState>({
     filteredList: [],
     filter: null,
     sort: {
@@ -108,7 +108,7 @@ export default function WorldScreen({ route }: Props) {
       direction: 'ASC',
     },
   });
-
+ */
   const sortArr = useCallback(({ arr, field, dir }: { arr: IData[]; field: keyof IData; dir: 'ASC' | 'DESC' }) => {
     return arr.sort((a, b) => {
       if (a[field] > b[field]) {
@@ -149,7 +149,7 @@ export default function WorldScreen({ route }: Props) {
       setServerReq({ isError: false, isLoading: false, status: '' });
     }, 3000);
   }, [serverReq.isError]);
-
+/*
   useEffect(() => {
     if (!route.params?.item) {
       return;
@@ -160,7 +160,7 @@ export default function WorldScreen({ route }: Props) {
       ...prev,
       items: appState.data.map((i) => (i.alpha3Code === item.alpha3Code ? item : i)),
     }));
-  }, [route.params, route.params?.item, appState.data]);
+  }, [route.params, route.params?.item, appState.data]); */
 
   const abortRequest = useCallback(async () => {
     controller.abort();
@@ -174,7 +174,7 @@ export default function WorldScreen({ route }: Props) {
     try {
       const data = await api.getAllData(controller.signal);
       appActions.addItems(data);
-      setState((prev) => ({ ...prev, filter: null }));
+      // setState((prev) => ({ ...prev, filter: null }));
       setServerReq({ isError: false, isLoading: false, status: '' });
       setSearchQuery('');
     } catch (err) {
