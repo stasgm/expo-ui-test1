@@ -23,6 +23,7 @@ export type WorldParamList = {
 
 export type TabTwoParamList = {
   TabTwoScreen: undefined;
+  BarcodeScreen: undefined;
 };
 
 export interface IData {
@@ -75,7 +76,7 @@ export interface IField {
 }
 
 export interface ISortField {
-  number: number;
+  number?: number;
   field: string;
   direction: 'ASC' | 'DESC';
 }

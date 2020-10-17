@@ -28,7 +28,10 @@ export const reducer: Reducer<IAppState, TAppActions> = (state = initialState, a
         data: [],
       };
     case ActionAppTypes.UPDATE_FILTER: {
-      return { ...state, filter: action.payload };
+      return { ...state, filter: [...state.filter, action.payload] };
+    }
+    case ActionAppTypes.UPDATE_SORT: {
+      return { ...state, sort: [...state.sort, action.payload] };
     }
     default:
       return state;
