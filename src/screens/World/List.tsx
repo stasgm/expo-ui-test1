@@ -217,7 +217,7 @@ export default function WorldScreen() {
   }, [abortRequest, appActions, controller.signal]);
 
   useEffect(() => {
-    // loadData();
+    loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -312,7 +312,7 @@ export default function WorldScreen() {
       <FlatList
         ListEmptyComponent={<Text style={{ flex: 1, textAlign: 'center' }}>Нет данных</Text>}
         refreshControl={<RefreshControl refreshing={serverReq.isLoading} onRefresh={() => loadData()} />}
-        data={list /* ((appState.forms?.worldList as unknown) || []) as IData[] */}
+        data={appState.data /* ((appState.forms?.worldList as unknown) || []) as IData[] */}
         renderItem={renderItem}
         keyExtractor={(item) => item.name}
         ItemSeparatorComponent={ItemSeparator}
