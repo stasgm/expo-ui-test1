@@ -33,5 +33,6 @@ export default function BottomTabNavigator() {
 }
 
 function TabBarIcon(props: { name: string; color: string }) {
+  // eslint-disable-next-line react-native/no-inline-styles
   return <Fontisto size={28} style={{ marginBottom: -3 }} {...props} />;
 }

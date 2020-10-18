@@ -6,7 +6,7 @@ export type RootStackParamList = {
 };
 
 export type ExtraStackParamList = {
-  SelectItem: undefined;
+  SelectItem: { name: string };
 };
 
 export type BottomTabParamList = {
@@ -18,7 +18,7 @@ export type WorldParamList = {
   List: { item: IData };
   Settings: undefined;
   Filter: undefined;
-  Document: { item: IData };
+  Document: { id: number };
 };
 
 export type TabTwoParamList = {
@@ -53,15 +53,21 @@ export interface IAppSettings {
   dakrTheme?: boolean;
 }
 
+export interface IForm {
+  [name: string]: any;
+}
+
+export interface IForms {
+  [name: string]: IForm;
+}
+
 export interface IAppState {
   data: IData[];
   filter: IField[];
   sort: ISortField[];
   settings?: IAppSettings;
   settingsSearch?: string[];
-  // formParams?: IFormParams;
-  // productParams?: ISellLine;
-  // documentParams?: IDocumentParams;
+  forms: IForms;
 }
 
 export interface IListItem {
@@ -77,6 +83,6 @@ export interface IField {
 
 export interface ISortField {
   number?: number;
-  field: string;
+  field: keyof IData;
   direction: 'ASC' | 'DESC';
 }

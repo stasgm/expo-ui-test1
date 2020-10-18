@@ -1,4 +1,4 @@
-import { IData, IField, ISortField } from '../../model/types';
+import { IData, IField, IForms, ISortField } from '../../model/types';
 import { createActionPayload, ActionsUnion, createAction } from '../utils';
 
 // eslint-disable-next-line no-shadow
@@ -10,6 +10,8 @@ export enum ActionAppTypes {
   DELETE_ALL = 'DELETE_ALL',
   UPDATE_FILTER = 'UPDATE_FILTER',
   UPDATE_SORT = 'UPDATE_SORT',
+  SET_FORM = 'SET_FORM',
+  CLEAR_FORM = 'CLEAR_FORM',
 }
 
 export const AppActions = {
@@ -20,6 +22,8 @@ export const AppActions = {
   deleteAllItems: createAction<ActionAppTypes.DELETE_ALL>(ActionAppTypes.DELETE_ALL),
   updateFilter: createActionPayload<ActionAppTypes.UPDATE_FILTER, IField>(ActionAppTypes.UPDATE_FILTER),
   updateSort: createActionPayload<ActionAppTypes.UPDATE_SORT, ISortField>(ActionAppTypes.UPDATE_SORT),
+  setForm: createActionPayload<ActionAppTypes.SET_FORM, IForms>(ActionAppTypes.SET_FORM),
+  clearForm: createActionPayload<ActionAppTypes.CLEAR_FORM, string>(ActionAppTypes.CLEAR_FORM),
 };
 
 export type TAppActions = ActionsUnion<typeof AppActions>;

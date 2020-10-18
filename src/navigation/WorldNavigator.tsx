@@ -1,4 +1,4 @@
-import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
 
 import { WorldParamList } from '../model/types';
@@ -38,6 +38,3 @@ export const WorldNavigator = () => {
 };
 
 const WorldStack = createStackNavigator<WorldParamList>();
-
-export type Props = StackScreenProps<WorldParamList, 'List'>;
-export type DetailProps = StackScreenProps<WorldParamList, 'Document'>;

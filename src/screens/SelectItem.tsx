@@ -15,14 +15,7 @@ type Props = StackScreenProps<ExtraStackParamList, 'SelectItem'>;
 export const SelectItemScreen = ({ route, navigation }: Props) => {
   const { colors } = useTheme();
 
-  const {
-    list: newList,
-    isMulti,
-    parentScreen: newParentScreen,
-    fieldName: newFieldName,
-    title: newTitle,
-    value: newValue,
-  } = route.params;
+  const { name } = route.params;
 
   // const { state: appState, actions: appActions } = useAppStore();
 
@@ -36,7 +29,7 @@ export const SelectItemScreen = ({ route, navigation }: Props) => {
   const [isMultiSelect, setIsMultiSelect] = useState<boolean>(false);
   const [list, setList] = useState<IListItem[] | undefined>(undefined);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     if (!newList) {
       return;
     }
@@ -47,7 +40,7 @@ export const SelectItemScreen = ({ route, navigation }: Props) => {
     setIsMultiSelect(isMulti || false);
     setList(newList);
     setCheckedItem(newValue);
-  }, [isMulti, newFieldName, newList, newParentScreen, newTitle, newValue, route.params, searchQuery]);
+  }, [isMulti, newFieldName, newList, newParentScreen, newTitle, newValue, route.params, searchQuery]); */
 
   useEffect(() => {
     if (!list) {
@@ -80,9 +73,7 @@ export const SelectItemScreen = ({ route, navigation }: Props) => {
         <HeaderRight
           text="Готово"
           onPress={() => {
-            parentScreen
-              ? navigation.navigate(parentScreen as keyof RootStackParamList, { [fieldName]: checkedItem })
-              : null;
+            parentScreen ? navigation.navigate('SelectItem') : null;
           }}
         />
       ),
@@ -91,7 +82,7 @@ export const SelectItemScreen = ({ route, navigation }: Props) => {
 
   return (
     <View style={[localStyles.content, { backgroundColor: colors.card }]}>
-      <SubTitle styles={[localStyles.title, { backgroundColor: colors.background }]}>{title}</SubTitle>
+      <SubTitle style={{ backgroundColor: colors.background }}>{title}</SubTitle>
       <ItemSeparator />
       <Searchbar placeholder="Поиск" onChangeText={setSearchQuery} value={searchQuery} style={localStyles.searchBar} />
       <ItemSeparator />

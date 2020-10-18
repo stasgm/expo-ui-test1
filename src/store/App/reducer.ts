@@ -7,6 +7,7 @@ export const initialState: IAppState = {
   data: [],
   filter: [],
   sort: [{ number: 0, field: 'name', direction: 'ASC' }],
+  forms: undefined,
 };
 
 export const reducer: Reducer<IAppState, TAppActions> = (state = initialState, action): IAppState => {
@@ -33,6 +34,16 @@ export const reducer: Reducer<IAppState, TAppActions> = (state = initialState, a
     case ActionAppTypes.UPDATE_SORT: {
       return { ...state, sort: [...state.sort, action.payload] };
     }
+    case ActionAppTypes.SET_FORM: {
+      return {
+        ...state,
+        forms: { ...state.forms, ...action.payload },
+      };
+    }
+    case ActionAppTypes.CLEAR_FORM: {
+      return { ...state, forms: { ...state.forms, [action.payload]: undefined } };
+    }
+
     default:
       return state;
   }

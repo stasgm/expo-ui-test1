@@ -1,23 +1,25 @@
 import { useNavigation } from '@react-navigation/native';
+import { StackScreenProps } from '@react-navigation/stack';
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { IconButton, TextInput, Colors } from 'react-native-paper';
 
-import { IData } from '../../model/types';
-import { DetailProps } from '../../navigation/WorldNavigator';
+import { ExtraStackParamList, IData } from '../../model/types';
 
-export const DocumentDetail = ({ route }: DetailProps) => {
+type Props = StackScreenProps<ExtraStackParamList, 'SelectItem'>;
+
+export const DocumentDetail = ({ route }: Props) => {
   const navigation = useNavigation();
 
   const [state, setState] = useState<IData>({} as IData);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     if (!route.params?.item) {
       return;
     }
     const { item } = route.params;
     setState(item);
-  }, [route.params, route.params?.item]);
+  }, [route.params, route.params?.item]); */
 
   const saveEntity = useCallback(() => {
     if (!state) {

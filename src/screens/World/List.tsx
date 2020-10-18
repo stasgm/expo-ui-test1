@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import { useActionSheet as useExpoActionSheet } from '@expo/react-native-action-sheet';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useLayoutEffect, useState, useEffect } from 'react';
+import React, { useCallback, useLayoutEffect, useState, useEffect, useRef } from 'react';
 import {
   FlatList,
   Text,
@@ -9,15 +9,18 @@ import {
   StyleSheet,
   StatusBar,
   SafeAreaView,
+  Animated,
   TouchableHighlight,
   RefreshControl,
   Dimensions,
 } from 'react-native';
+import { RectButton } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { FAB, Searchbar, Colors, Avatar, IconButton } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import ItemSeparator from '../../components/ItemSeparator';
-import { IData, IDataFetch } from '../../model/types';
-import { Props } from '../../navigation/WorldNavigator';
+import { IData, IDataFetch, IForm } from '../../model/types';
 import api from '../../services/api';
 import { useAppStore } from '../../store';
 
@@ -57,36 +60,82 @@ const list: IData[] = [
   },
 ];
 
-const Item = ({ item, onPress, style }: { item: IData; onPress: () => void; style?: { backgroundColor: string } }) => (
-  <TouchableHighlight onPress={onPress} style={[styles.item, style]} underlayColor="#DDDDDD">
-    <View style={styles.itemContainer}>
-      <View style={{ width: 40, justifyContent: 'center' }}>
-        <Avatar.Text size={32} label={item.alpha2Code || '?'} style={{ backgroundColor: Colors.blue600 }} />
-      </View>
-      <View>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>{item.name}</Text>
-        </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.info}>
-            {item.region} - {item.population?.toLocaleString()}
-          </Text>
-        </View>
-      </View>
-    </View>
-  </TouchableHighlight>
-);
-/*
-interface IState {
-  filteredList: IData[];
-  filter: null | object;
-  sort: {
-    field: keyof IData;
-    direction: 'ASC' | 'DESC';
-  };
-} */
+const Item = ({ item, onPress, style }: { item: IData; onPress: () => void; style?: { backgroundColor: string } }) => {
+  const AnimatedIcon = Animated.createAnimatedComponent(Icon);
 
-export default function WorldScreen({ route }: Props) {
+  let ref = useRef(null);
+
+  const updateRef = (_ref) => {
+    ref = _ref;
+  };
+
+  const renderRightActions = (progress: any) => (
+    <View style={{ width: 120, flexDirection: 'row' }}>
+      {renderRightAction('star', '#ffab00', 120, progress)}
+      {renderRightAction('delete-forever', '#dd2c00', 60, progress)}
+      {/* {renderRightAction('mode-edit', '#ffab00', 120, progress)} */}
+    </View>
+  );
+  const renderRightAction = (icon, color, x, progress) => {
+    const trans = progress.interpolate({
+      inputRange: [0, 1, 2],
+      outputRange: [x, 0, 1],
+    });
+    const pressHandler = () => {
+      ((ref as unknown) as Swipeable).close();
+    };
+    return (
+      <Animated.View style={{ flex: 1, transform: [{ translateX: trans }] }}>
+        <RectButton style={[styles.rightAction, { backgroundColor: color }]} onPress={pressHandler}>
+          <AnimatedIcon name={icon} size={30} color="#fff" style={styles.actionIcon} />
+        </RectButton>
+      </Animated.View>
+    );
+  };
+
+  return (
+    <Swipeable friction={2} /* rightThreshold={120} */ renderRightActions={renderRightActions} ref={updateRef}>
+      <RectButton style={[styles.item, style, styles.itemContainer]} onPress={onPress}>
+        {/* <TouchableHighlight onPress={onPress} style={[styles.item, style]} underlayColor="#DDDDDD"> */}
+        {/* <View style={styles.itemContainer}> */}
+        <View style={{ width: 40, justifyContent: 'center' }}>
+          <Avatar.Text size={32} label={item.alpha2Code || '?'} style={{ backgroundColor: Colors.blue600 }} />
+        </View>
+        <View>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{item.name}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.info}>
+              {item.region} - {item.population?.toLocaleString()}
+            </Text>
+          </View>
+          {/* </View> */}
+        </View>
+        {/* </TouchableHighlight> */}
+      </RectButton>
+      {/*  <TouchableHighlight onPress={onPress} style={[styles.item, style]} underlayColor="#DDDDDD">
+        <View style={styles.itemContainer}>
+          <View style={{ width: 40, justifyContent: 'center' }}>
+            <Avatar.Text size={32} label={item.alpha2Code || '?'} style={{ backgroundColor: Colors.blue600 }} />
+          </View>
+          <View>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>{item.name}</Text>
+            </View>
+            <View style={styles.infoContainer}>
+              <Text style={styles.info}>
+                {item.region} - {item.population?.toLocaleString()}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableHighlight> */}
+    </Swipeable>
+  );
+};
+
+export default function WorldScreen() {
   const navigation = useNavigation();
   const { state: appState, actions: appActions } = useAppStore();
 
@@ -100,15 +149,6 @@ export default function WorldScreen({ route }: Props) {
 
   const [searchQuery, setSearchQuery] = useState('');
 
- /*  const [state, setState] = useState<IState>({
-    filteredList: [],
-    filter: null,
-    sort: {
-      field: 'name',
-      direction: 'ASC',
-    },
-  });
- */
   const sortArr = useCallback(({ arr, field, dir }: { arr: IData[]; field: keyof IData; dir: 'ASC' | 'DESC' }) => {
     return arr.sort((a, b) => {
       if (a[field] > b[field]) {
@@ -131,15 +171,22 @@ export default function WorldScreen({ route }: Props) {
   );
 
   useEffect(() => {
-    setState((prev) => ({
-      ...prev,
-      filteredList: sortArr({
+    /*     const worldList: IForm = {
+      worldList: sortArr({
         arr: appState.data.filter((i) => i.name.toUpperCase().includes(searchQuery.toUpperCase())),
-        dir: prev.sort.direction,
-        field: prev.sort.field,
+        dir: 'ASC',
+        field: 'name',
       }),
-    }));
-  }, [searchQuery, state.sort, appState.data, sortArr]);
+    };
+
+    appActions.setForm(worldList); */
+  }, [searchQuery, sortArr, appState.data, appActions]);
+
+  useEffect(() => {
+    if (!appState.forms) {
+    }
+    // console.log(Object.keys(appState.forms));
+  }, [appState.forms]);
 
   useEffect(() => {
     if (!serverReq.isError) {
@@ -149,18 +196,6 @@ export default function WorldScreen({ route }: Props) {
       setServerReq({ isError: false, isLoading: false, status: '' });
     }, 3000);
   }, [serverReq.isError]);
-/*
-  useEffect(() => {
-    if (!route.params?.item) {
-      return;
-    }
-    const { item } = route.params;
-    // console.log(item);
-    setState((prev) => ({
-      ...prev,
-      items: appState.data.map((i) => (i.alpha3Code === item.alpha3Code ? item : i)),
-    }));
-  }, [route.params, route.params?.item, appState.data]); */
 
   const abortRequest = useCallback(async () => {
     controller.abort();
@@ -174,17 +209,15 @@ export default function WorldScreen({ route }: Props) {
     try {
       const data = await api.getAllData(controller.signal);
       appActions.addItems(data);
-      // setState((prev) => ({ ...prev, filter: null }));
       setServerReq({ isError: false, isLoading: false, status: '' });
       setSearchQuery('');
     } catch (err) {
       setServerReq({ isError: true, isLoading: false, status: err.message === 'Aborted' ? 'Отмена' : err.message });
-      // console.log(err);
     }
   }, [abortRequest, appActions, controller.signal]);
 
   useEffect(() => {
-    loadData();
+    // loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -217,25 +250,29 @@ export default function WorldScreen({ route }: Props) {
               {
                 title: 'По континенту',
                 onPress: async () => {
-                  setState({ ...state, sort: { direction: 'ASC', field: 'region' } });
+                  appActions.updateSort({ direction: 'ASC', field: 'region' });
+                  // setState({ ...state, sort: { direction: 'ASC', field: 'region' } });
                 },
               },
               {
                 title: 'По наименованию',
                 onPress: async () => {
-                  setState({ ...state, sort: { direction: 'ASC', field: 'name' } });
+                  appActions.updateSort({ direction: 'ASC', field: 'name' });
+                  // setState({ ...state, sort: { direction: 'ASC', field: 'name' } });
                 },
               },
               {
                 title: 'По населению (по убыванию)',
                 onPress: async () => {
-                  setState({ ...state, sort: { direction: 'DESC', field: 'population' } });
+                  appActions.updateSort({ direction: 'DESC', field: 'population' });
+                  // setState({ ...state, sort: { direction: 'DESC', field: 'population' } });
                 },
               },
               {
                 title: 'По населению (по возрастанию)',
                 onPress: async () => {
-                  setState({ ...state, sort: { direction: 'ASC', field: 'population' } });
+                  appActions.updateSort({ direction: 'ASC', field: 'population' });
+                  // setState({ ...state, sort: { direction: 'ASC', field: 'population' } });
                 },
               },
               {
@@ -248,7 +285,7 @@ export default function WorldScreen({ route }: Props) {
         />
       ),
     });
-  }, [abortRequest, appActions, controller, loadData, navigation, serverReq.isLoading, showActionSheet, state]);
+  }, [abortRequest, appActions, controller, loadData, navigation, serverReq.isLoading, showActionSheet]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -266,16 +303,16 @@ export default function WorldScreen({ route }: Props) {
         />
         <IconButton
           icon="filter"
-          color={state.filter ? Colors.red500 : Colors.black}
+          color={appState.filter ? Colors.red500 : Colors.black}
           size={24}
           style={{ width: 36 }}
-          onPress={() => navigation.navigate('Filter', { filter: state.filter, sort: state.sort })}
+          onPress={() => navigation.navigate('Filter')}
         />
       </View>
       <FlatList
         ListEmptyComponent={<Text style={{ flex: 1, textAlign: 'center' }}>Нет данных</Text>}
         refreshControl={<RefreshControl refreshing={serverReq.isLoading} onRefresh={() => loadData()} />}
-        data={state.filteredList}
+        data={list /* ((appState.forms?.worldList as unknown) || []) as IData[] */}
         renderItem={renderItem}
         keyExtractor={(item) => item.name}
         ItemSeparatorComponent={ItemSeparator}
@@ -321,6 +358,16 @@ const useActionSheet = () => {
 };
 
 const styles = StyleSheet.create({
+  actionIcon: {
+    marginHorizontal: 10,
+    width: 30,
+  },
+  actionText: {
+    backgroundColor: 'transparent',
+    color: 'white',
+    fontSize: 16,
+    padding: 10,
+  },
   activityContainer: {
     alignItems: 'center',
     flex: 1,
@@ -335,12 +382,24 @@ const styles = StyleSheet.create({
   cover: {
     backgroundColor: 'rgba(0,0,0,.5)',
   },
+  dateText: {
+    backgroundColor: 'transparent',
+    color: '#999',
+    fontWeight: 'bold',
+    position: 'absolute',
+    right: 20,
+    top: 10,
+  },
   fab: {
     backgroundColor: Colors.blue600,
     bottom: 0,
     margin: 16,
     position: 'absolute',
     right: 0,
+  },
+  fromText: {
+    backgroundColor: 'transparent',
+    fontWeight: 'bold',
   },
   info: {
     fontSize: 10,
@@ -365,6 +424,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     padding: 50,
   },
+  messageText: {
+    backgroundColor: 'transparent',
+    color: '#999',
+  },
   popup: {
     alignItems: 'center',
     backgroundColor: '#FFF',
@@ -373,6 +436,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginHorizontal: 10,
     minHeight: 80,
+  },
+  rightAction: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
   separator: {
     backgroundColor: '#333536',
